@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --coverage",
     "start": "nodemon ./server.js"
   },
   "keywords": [],
@@ -19,5 +19,9 @@
     "sequelize": "^6.37.5",
     "sequelize-date-no-tz-postgres": "^1.0.0",
     "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
   }
 }
