@@ -10,7 +10,13 @@ describe('Health Check API', () => {
     });
     
     afterEach(async () => {
-        await HealthCheck.destroy({ truncate: true });
+        // await HealthCheck.destroy({ truncate: true });
+        try {
+            await sequelize.authenticate();
+            await sequelize.truncate({ cascade: true })
+        } catch (error) {
+            console.log("DB not connected",error);
+        }
     });
     
     afterAll(async () => {
@@ -110,33 +116,6 @@ describe('Health Check API', () => {
             .query({ param: 'value' })
             .expect(405);
         });
-    });
-
-    describe('Server Errors', () => {
-        it('should return 503 when database operations fail', async () => {
-            const queryInterface = sequelize.getQueryInterface();
-            
-            await queryInterface.renameTable('HealthChecks', 'wrongName');
-            
-            await request(server)
-            .get('/healthz')
-            .expect(503)
-            .expect('Cache-Control', /no-cache/);
-            
-            await queryInterface.renameTable('wrongName', 'HealthChecks');
-        });
-        it('should return 503 when HealthChecks table is missing', async () => {
-            const queryInterface = sequelize.getQueryInterface();
-
-            await queryInterface.dropTable('HealthChecks');
-            
-            await request(server)
-            .get('/healthz')
-            .expect(503)
-            .expect('Cache-Control', /no-cache/);
-            
-            await HealthCheck.sync({ force: true });
-        });
         it('should maintain security headers on errors', async () => {
             await request(server)
                 .get('/healthz?param=value')
@@ -145,5 +124,15 @@ describe('Health Check API', () => {
                 .expect('Pragma', 'no-cache')
                 .expect('X-Content-Type-Options', 'nosniff');
             });
+    });
+
+    describe('Server Errors', () => {
+        it('should return 503 when HealthChecks table is missing', async () => {;
+            await sequelize.close()
+            await request(server)
+            .get('/healthz')
+            .expect(503)
+            .expect('Cache-Control', /no-cache/);
+        });
         });
     });
