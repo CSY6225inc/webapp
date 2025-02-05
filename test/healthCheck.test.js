@@ -5,23 +5,36 @@ const sequelize = require('../config/db.config');
 
 describe('Health Check API', () => {
     beforeAll(async () => {
-        await initalizeDatabase();
-        // await sequelize.sync({ force: true });
-    });
-    
-    afterEach(async () => {
-        // await HealthCheck.destroy({ truncate: true });
+        // await initalizeDatabase();
         try {
-            await sequelize.authenticate();
-            await sequelize.truncate({ cascade: true })
+            await sequelize.sync({ force: true });
         } catch (error) {
-            console.log("DB not connected",error);
+            console.log(error);
         }
     });
     
-    afterAll(async () => {
-        await sequelize.close();
+    afterEach(async () => {
+        try {
+            if (sequelize.connectionManager.pool) {
+                await sequelize.authenticate();
+                await sequelize.truncate({ cascade: true });
+            }
+        } catch (error) {
+            console.log("DB not connected", error);
+        }
     });
+
+    
+    afterAll(async () => {
+        try {
+            if (sequelize.connectionManager.pool) {
+                await sequelize.close();
+            }
+        } catch (error) {
+            console.log("Error closing DB connection", error);
+        }
+    });
+
     
     describe('Successful Operations', () => {
         it('should return 200 OK with valid request', async () => {
