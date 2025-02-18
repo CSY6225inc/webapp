@@ -42,9 +42,6 @@ jobs:
           echo "Starting PostgreSQL manually"
           sudo service postgresql start
 
-      - name: Echo DB_DIALECT for verification
-        run: echo "DB_DIALECT is ${{secrets.DB_DIALECT}}"
-
       - name: Update database password
         run: |
           echo "Updating database password"
@@ -58,4 +55,3 @@ jobs:
         run: |
           echo "All tests passed!" > $GITHUB_STEP_SUMMARY
           echo "This PR can now be merged!" >> $GITHUB_STEP_SUMMARY
-          

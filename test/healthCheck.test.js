@@ -29,6 +29,12 @@ describe('Health Check API', () => {
         try {
             if (sequelize.connectionManager.pool) {
                 await sequelize.close();
+                return new Promise((resolve) => {
+                    server.close(() => {
+                        console.log('Server and database closed after tests');
+                        resolve();
+                    });
+                });
             }
         } catch (error) {
             console.log("Error closing DB connection", error);

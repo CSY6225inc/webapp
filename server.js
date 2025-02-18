@@ -13,8 +13,8 @@ initalizeDatabase();
 
 app.use(healthRoute);
 
-app.listen(process.env.PORT, () => {
+const server = app.listen(process.env.PORT, () => {
     console.log(`Server runs on port ${process.env.PORT}`);
 })
 
-module.exports = app;
+module.exports = server;
