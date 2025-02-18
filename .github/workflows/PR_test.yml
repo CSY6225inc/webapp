@@ -45,10 +45,10 @@ jobs:
       - name: Update database password
         run: |
           echo "Updating database password"
-          sudo -u postgres psql -c "ALTER USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
+          sudo -u postgres psql -c "ALTER USER ${{secrets.DB_USER}} WITH PASSWORD '${{secrets.DB_PASSWORD}}';"
 
       - name: Echo DB_DIALECT for verification
-        run: echo "DB_DIALECT is $DB_DIALECT"
+        run: echo "DB_DIALECT is ${{secrets.DB_DIALECT}}"
 
       - name: Run tests
         run: npm test 
