@@ -1,6 +1,6 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
-
+console.log("checking if password exists in Application layer",Boolean(process.env.DB_PASSWORD));
 const sequelize = new Sequelize(
     process.env.DB_NAME,
     process.env.DB_USER,
