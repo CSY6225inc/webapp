@@ -46,7 +46,7 @@ describe('Health Check API', () => {
         it('should return 200 OK with valid request', async () => {
             await request(server)
             .get('/healthz')
-            .expect(201)
+            .expect(200)
             .expect('Cache-Control', /no-cache/)
             .expect('Pragma', 'no-cache')
             .expect('X-Content-Type-Options', 'nosniff');
