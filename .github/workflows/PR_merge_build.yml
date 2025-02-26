@@ -126,7 +126,8 @@ jobs:
             -var "gcp_image_family=${{ secrets.GCP_IMAGE_FAMILY }}" \
             -var "gcp_machine_type=${{ secrets.GCP_MACHINE_TYPE }}" \
             -var "ssh_username=${{ secrets.SSH_USERNAME }}" \
-            -var "db_password=${{ secrets.DB_PASSWORD }}" \
-            -var "db_name=${{ secrets.DB_NAME }}" \
+            -var "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
+            -var "DB_NAME=${{ secrets.DB_NAME }}" \
+            -var "DB_USER=${{ secrets.DB_USER }}" \
             .
 
