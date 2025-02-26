@@ -9,7 +9,7 @@ packer {
       source  = "github.com/hashicorp/googlecompute"
     }
   }
-}
+         }
 
 source "googlecompute" "app_image" {
   project_id          = var.gcp_project_id
