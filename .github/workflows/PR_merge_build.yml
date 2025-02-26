@@ -136,3 +136,4 @@ jobs:
             -var "DB_NAME=${{ secrets.DB_NAME }}" \
             -var "DB_USER=${{ secrets.DB_USER }}" \
             .
+            
