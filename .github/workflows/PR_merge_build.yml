@@ -103,17 +103,19 @@ jobs:
         working-directory: packer
         run: packer validate .
 
-      # - name: Build AMI with Packer (AWS)
-      #   working-directory: packer
-      #   run: |
-      #     packer build --force \
-      #       -var "artifact_path=$(pwd)/../webapp-fork.zip" \
-      #       -var "aws_region=${{ secrets.AWS_REGION }}" \
-      #       -var "aws_subnet_id=${{ secrets.AWS_SUBNET_ID }}" \
-      #       -var "ssh_username=ubuntu" \
-      #       -var "db_password=${{ secrets.DB_PASSWORD }}" \
-      #       -var "db_name=${{ secrets.DB_NAME }}" \
-      #       .
+      - name: Build Image with Packer (AWS)
+        working-directory: packer
+        run: |
+          packer build --force \
+            -var "aws_region=${{ secrets.AWS_REGION }}" \
+            -var "aws_subnet_id=${{ secrets.AWS_SUBNET_ID }}" \
+            -var "aws_profile=${{ secrets.AWS_PROFILE }}" \
+            -var "aws_device_name=${{ secrets.AWS_DEVICE_NAME }}" \
+            -var "ssh_username=${{ secrets.SSH_USERNAME }}" \
+            -var "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
+            -var "DB_NAME=${{ secrets.DB_NAME }}" \
+            -var "DB_USER=${{ secrets.DB_USER }}" \
+            .
 
       - name: Authenticate with Google Cloud
         run: |

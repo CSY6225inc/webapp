@@ -56,8 +56,8 @@ source "amazon-ebs" "ubuntu_server" {
 build {
   name = "ubuntu-24-node"
   sources = [
-    # "source.amazon-ebs.ubuntu_server",
-    "source.googlecompute.app_image",
+    "source.amazon-ebs.ubuntu_server",
+    # "source.googlecompute.app_image",
   ]
 
   provisioner "file" {
