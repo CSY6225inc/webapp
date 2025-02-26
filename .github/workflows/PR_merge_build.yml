@@ -1,0 +1,133 @@
+name: Build Packer Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PRODUCT_VERSION: "1.10.0" 
+
+jobs:
+  # integration-tests:
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     DB_NAME: ${{ secrets.DB_NAME }}
+  #     DB_USER: ${{ secrets.DB_USER }}
+  #     DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  #     DB_HOST: ${{ secrets.DB_HOST }}
+  #     DB_PORT: ${{ secrets.DB_PORT }}
+  #     DB_DIALECT: ${{ secrets.DB_DIALECT }}
+
+  #   steps:
+  #     - name: Check out code
+  #       uses: actions/checkout@v3
+
+  #     - name: Set up Node
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 16  # Specify your Node.js version
+
+  #     - name: Install dependencies
+  #       run: npm install
+
+  #     - name: Install PostgreSQL
+  #       run: |
+  #         echo "Installing PostgreSQL"
+  #         sudo apt-get update -y
+  #         sudo apt-get install -y postgresql postgresql-contrib
+
+  #     - name: Configure PostgreSQL without systemd
+  #       run: |
+  #         echo "Starting PostgreSQL manually"
+  #         sudo service postgresql start
+
+  #     - name: Update database password
+  #       run: |
+  #         echo "Updating database password"
+  #         sudo -u postgres psql -c "ALTER USER ${{secrets.DB_USER}} WITH PASSWORD '${{secrets.DB_PASSWORD}}';"
+
+  #     - name: Run tests
+  #       run: npm test 
+        
+  build-ami:
+    # needs: integration-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          cat <<EOF > .env
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          aws_region=${{ secrets.AWS_REGION }}
+          aws_subnet_id=${{ secrets.AWS_SUBNET_ID }}
+          DB_DIALECT=${{secrets.DB_DIALECT}}
+          DB_HOST=${{secrets.DB_HOST}}
+          DB_PORT=${{secrets.DB_PORT}}
+          PORT=${{secrets.PORT}}
+          EOF
+        shell: bash
+
+      - name: Zip project artifact
+        run: |
+          zip -r webapp-fork.zip .
+        working-directory: .
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: "latest"
+
+      - name: Run Packer Init
+        working-directory: packer
+        run: packer init server.pkr.hcl
+
+      - name: Run Packer Format (Recursive)
+        working-directory: packer
+        run: packer fmt -recursive .
+
+      - name: Run Packer Validate
+        working-directory: packer
+        run: packer validate server.pkr.hcl
+
+      # - name: Build AMI with Packer (AWS)
+      #   working-directory: packer
+      #   run: |
+      #     packer build --force \
+      #       -var "artifact_path=$(pwd)/../webapp-fork.zip" \
+      #       -var "aws_region=${{ secrets.AWS_REGION }}" \
+      #       -var "aws_subnet_id=${{ secrets.AWS_SUBNET_ID }}" \
+      #       -var "ssh_username=ubuntu" \
+      #       -var "db_password=${{ secrets.DB_PASSWORD }}" \
+      #       -var "db_name=${{ secrets.DB_NAME }}" \
+      #       server.pkr.hcl
+
+      - name: Build Image with Packer (GCP)
+        working-directory: packer
+        run: |
+          packer build --force \
+            -var "gcp_project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var "gcp_zone=${{ secrets.GCP_ZONE }}" \
+            -var "gcp_source_image_family=ubuntu-2404-lts-amd64" \
+            -var "gcp_image_name=csye6225-app-{{timestamp}}" \
+            -var "gcp_image_family=csye6225-app" \
+            -var "gcp_machine_type=e2.micro"
+            -var "ssh_username=ubuntu" \
+            -var "db_password=${{ secrets.DB_PASSWORD }}" \
+            -var "db_name=${{ secrets.DB_NAME }}" \
+            server.pkr.hcl
+
+
