@@ -71,7 +71,7 @@ variable "aws_volume_type" {
 # App related values to build artfiacts 
 variable "application_artifact_path" {
   type    = string
-  default = "../webapp-fork.zip"
+  default = ""
 }
 
 variable "ssh_username" {

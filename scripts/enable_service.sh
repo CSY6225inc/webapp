@@ -20,6 +20,8 @@ WorkingDirectory=/opt/csye6225
 EnvironmentFile=/opt/csye6225/.env
 ExecStart=/usr/bin/node /opt/csye6225/server.js
 Restart=always
+StandardOutput=append:/var/log/csye6225.log
+StandardError=append:/var/log/csye6225.log
 
 [Install]
 WantedBy=multi-user.target
