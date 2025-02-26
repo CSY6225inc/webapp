@@ -136,4 +136,5 @@ jobs:
             -var "gcp_image_name=${{ secrets.GCP_IMAGE_NAME }}" \
             -var "gcp_image_family=${{ secrets.GCP_IMAGE_FAMILY }}" \
             -var "gcp_machine_type=${{ secrets.GCP_MACHINE_TYPE }}" \
+            -var "application_artifact_path=../webapp-fork.zip"
             .
