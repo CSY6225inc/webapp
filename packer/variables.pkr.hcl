@@ -50,7 +50,7 @@ variable "aws_ami_name" {
 }
 variable "aws_instance_type" {
   type    = string
-  default = "subnet-0601a52449572191c"
+  default = "t2.micro"
 }
 variable "aws_profile" {
   type    = string
