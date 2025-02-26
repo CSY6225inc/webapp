@@ -93,7 +93,7 @@ jobs:
 
       - name: Run Packer Init
         working-directory: packer
-        run: packer init server.pkr.hcl
+        run: packer init .
 
       - name: Run Packer Format (Recursive)
         working-directory: packer
@@ -101,7 +101,7 @@ jobs:
 
       - name: Run Packer Validate
         working-directory: packer
-        run: packer validate server.pkr.hcl
+        run: packer validate .
 
       # - name: Build AMI with Packer (AWS)
       #   working-directory: packer
@@ -113,7 +113,7 @@ jobs:
       #       -var "ssh_username=ubuntu" \
       #       -var "db_password=${{ secrets.DB_PASSWORD }}" \
       #       -var "db_name=${{ secrets.DB_NAME }}" \
-      #       server.pkr.hcl
+      #       .
 
       - name: Build Image with Packer (GCP)
         working-directory: packer
@@ -128,5 +128,5 @@ jobs:
             -var "ssh_username=${{ secrets.SSH_USERNAME }}" \
             -var "db_password=${{ secrets.DB_PASSWORD }}" \
             -var "db_name=${{ secrets.DB_NAME }}" \
-            server.pkr.hcl
+            .
 
