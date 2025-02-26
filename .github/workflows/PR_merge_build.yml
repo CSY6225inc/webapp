@@ -115,10 +115,16 @@ jobs:
       #       -var "db_name=${{ secrets.DB_NAME }}" \
       #       .
 
+      - name: Authenticate with Google Cloud
+        run: |
+          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > gcp-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$PWD/gcp-key.json
+
       - name: Build Image with Packer (GCP)
         working-directory: packer
         run: |
-          packer build --force \
+          export GOOGLE_APPLICATION_CREDENTIALS=$PWD/../gcp-key.json
+          packer build --force -var-file=variables.pkr.hcl \
             -var "gcp_project_id=${{ secrets.GCP_PROJECT_ID }}" \
             -var "gcp_zone=${{ secrets.GCP_ZONE }}" \
             -var "gcp_source_image_family=${{ secrets.GCP_SOURCE_IMAGE_FAMILY }}" \
