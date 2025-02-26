@@ -129,5 +129,3 @@ jobs:
             -var "db_password=${{ secrets.DB_PASSWORD }}" \
             -var "db_name=${{ secrets.DB_NAME }}" \
             server.pkr.hcl
-
-
