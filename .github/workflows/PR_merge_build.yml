@@ -76,7 +76,7 @@ jobs:
 
       - name: Zip project artifact
         run: |
-          zip -r webapp-fork.zip .
+          zip -r webapp-fork.zip . 
         working-directory: .
 
       - name: Configure AWS Credentials
@@ -85,6 +85,17 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          install_components: 'beta,gsutil'
 
       - name: Setup Packer
         uses: hashicorp/setup-packer@main
@@ -103,9 +114,10 @@ jobs:
         working-directory: packer
         run: packer validate .
 
-      - name: Build Image with Packer (AWS)
+      - name: Build Image with Packer (AWS & GCP)
         working-directory: packer
         run: |
+          export GOOGLE_APPLICATION_CREDENTIALS=$PWD/../gcp-key.json
           packer build --force \
             -var "aws_region=${{ secrets.AWS_REGION }}" \
             -var "aws_subnet_id=${{ secrets.AWS_SUBNET_ID }}" \
@@ -114,27 +126,10 @@ jobs:
             -var "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
             -var "DB_NAME=${{ secrets.DB_NAME }}" \
             -var "DB_USER=${{ secrets.DB_USER }}" \
-            .
-
-      - name: Authenticate with Google Cloud
-        run: |
-          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > gcp-key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=$PWD/gcp-key.json
-
-      - name: Build Image with Packer (GCP)
-        working-directory: packer
-        run: |
-          export GOOGLE_APPLICATION_CREDENTIALS=$PWD/../gcp-key.json
-          packer build --force \
             -var "gcp_project_id=${{ secrets.GCP_PROJECT_ID }}" \
             -var "gcp_zone=${{ secrets.GCP_ZONE }}" \
             -var "gcp_source_image_family=${{ secrets.GCP_SOURCE_IMAGE_FAMILY }}" \
             -var "gcp_image_name=${{ secrets.GCP_IMAGE_NAME }}" \
             -var "gcp_image_family=${{ secrets.GCP_IMAGE_FAMILY }}" \
             -var "gcp_machine_type=${{ secrets.GCP_MACHINE_TYPE }}" \
-            -var "ssh_username=${{ secrets.SSH_USERNAME }}" \
-            -var "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
-            -var "DB_NAME=${{ secrets.DB_NAME }}" \
-            -var "DB_USER=${{ secrets.DB_USER }}" \
             .
-            
