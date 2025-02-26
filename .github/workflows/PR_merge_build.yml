@@ -121,11 +121,12 @@ jobs:
           packer build --force \
             -var "gcp_project_id=${{ secrets.GCP_PROJECT_ID }}" \
             -var "gcp_zone=${{ secrets.GCP_ZONE }}" \
-            -var "gcp_source_image_family=ubuntu-2404-lts-amd64" \
-            -var "gcp_image_name=csye6225-app-{{timestamp}}" \
-            -var "gcp_image_family=csye6225-app" \
-            -var "gcp_machine_type=e2.micro"
-            -var "ssh_username=ubuntu" \
+            -var "gcp_source_image_family=${{ secrets.GCP_SOURCE_IMAGE_FAMILY }}" \
+            -var "gcp_image_name=${{ secrets.GCP_IMAGE_NAME }}" \
+            -var "gcp_image_family=${{ secrets.GCP_IMAGE_FAMILY }}" \
+            -var "gcp_machine_type=${{ secrets.GCP_MACHINE_TYPE }}" \
+            -var "ssh_username=${{ secrets.SSH_USERNAME }}" \
             -var "db_password=${{ secrets.DB_PASSWORD }}" \
             -var "db_name=${{ secrets.DB_NAME }}" \
             server.pkr.hcl
+
