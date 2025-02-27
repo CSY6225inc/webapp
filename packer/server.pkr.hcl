@@ -33,17 +33,9 @@ source "amazon-ebs" "ubuntu_server" {
   instance_type               = var.aws_instance_type
   subnet_id                   = var.aws_subnet_id
   associate_public_ip_address = true
-
-  source_ami_filter {
-    filters = {
-      name                = var.aws_ami_filter_name
-      virtualization-type = var.aws_ami_virtualization_type
-    }
-    owners      = ["099720109477"]
-    most_recent = true
-  }
-  ssh_username = var.ssh_username
-  ami_name     = var.aws_ami_name
+  source_ami                  = var.aws_source_ami
+  ssh_username                = var.ssh_username
+  ami_name                    = var.aws_ami_name
 
   launch_block_device_mappings {
     device_name           = var.aws_device_name
@@ -101,4 +93,9 @@ build {
   provisioner "shell" {
     script = "../scripts/enable_service.sh"
   }
+
+  provisioner "shell" {
+    script = "../scripts/remove_git.sh"
+  }
+
 }
