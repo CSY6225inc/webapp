@@ -68,6 +68,10 @@ variable "aws_volume_type" {
   type    = string
   default = "gp2"
 }
+variable "aws_source_ami" {
+  type    = string
+  default = "ami-04d848e32806578ba"
+}
 # App related values to build artfiacts 
 variable "application_artifact_path" {
   type    = string
