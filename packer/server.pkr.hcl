@@ -32,10 +32,10 @@ source "amazon-ebs" "ubuntu_server" {
   region                      = var.aws_region
   instance_type               = var.aws_instance_type
   subnet_id                   = var.aws_subnet_id
-  associate_public_ip_address = true
-  source_ami                  = var.aws_source_ami
-  ssh_username                = var.ssh_username
-  ami_name                    = var.aws_ami_name
+  associate_public_ip_address=true
+  source_ami=    var.aws_source_ami
+  ssh_username                =    var.ssh_username
+  ami_name                    =  var.aws_ami_name
 
   launch_block_device_mappings {
     device_name           = var.aws_device_name
