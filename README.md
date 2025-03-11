@@ -53,3 +53,6 @@ Response Codes
 * 405 Method Not Allowed: If the request uses a method other than GET.
 * 404 Wrong endpoint: If the request uses a wrong endpoint other than ```/healthz```.
 
+
+
+
