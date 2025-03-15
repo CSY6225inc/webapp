@@ -51,13 +51,6 @@ build {
     "source.googlecompute.app_image",
     "source.amazon-ebs.ubuntu_server",
   ]
-  post-processor "manifest" {
-    output     = "manifest.json"
-    strip_path = true
-    custom_data = {
-      timestamp = timestamp()
-    }
-  }
   provisioner "file" {
     source      = var.application_artifact_path
     destination = "/tmp/webapp-fork.zip"
