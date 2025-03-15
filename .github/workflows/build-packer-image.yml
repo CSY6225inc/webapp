@@ -141,3 +141,45 @@ jobs:
             -var "gcp_machine_type=${{ secrets.GCP_MACHINE_TYPE }}" \
             -var "application_artifact_path=../webapp-fork.zip" \
             .
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Check Manifest Exists
+        working-directory: packer
+        run: |
+          if [ ! -f manifest.json ]; then
+            echo "Error: manifest.json not found!"
+            exit 1
+          fi
+
+      - name: Parse Manifest File
+        working-directory: packer
+        id: parse-manifest
+        run: |
+          AWS_AMI_ID=$(jq -r '.builds[] | select(.name == "aws").artifact_id' manifest.json | cut -d':' -f2)
+          echo "AWS_AMI_ID=$AWS_AMI_ID" >> $GITHUB_ENV
+          GCP_IMAGE_NAME=$(jq -r '.builds[] | select(.name == "gcp").artifact_id | split("/") | last' manifest.json)
+          echo "GCP_IMAGE_NAME=$GCP_IMAGE_NAME" >> $GITHUB_ENV
+
+      - name: Validate AWS AMI Availability
+        if: env.AWS_AMI_ID != null
+        run: |
+          echo "Waiting for AMI to become available"
+          aws ec2 wait image-available \
+            --image-ids ${{ env.AWS_AMI_ID }} \
+            --region ${{ secrets.AWS_REGION }}
+
+      - name: Share AWS AMI with DEMO Account
+        if: env.AWS_AMI_ID != null
+        run: |
+          aws ec2 modify-image-attribute \
+            --image-id ${{ env.AWS_AMI_ID }} \
+            --region ${{ secrets.AWS_REGION }} \
+            --launch-permission "Add=[{UserId=${{ secrets.DEMO_AWS_ACCOUNT_ID }}]"}
+
+      - name: Verify GCP Service Account
+        if: env.GCP_IMAGE_NAME != null
+        run: |
+          gcloud iam service-accounts describe ${{ secrets.GCP_DEMO_PROJECT_SA }} \
+            --project=${{ secrets.GCP_PROJECT_ID }}

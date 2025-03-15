@@ -8,6 +8,13 @@ packer {
       version = ">= 1.0.0"
       source  = "github.com/hashicorp/googlecompute"
     }
+    post-processor "manifest" {
+      output     = "manifest.json"
+      strip_path = true
+      custom_data = {
+        timestamp = timestamp()
+      }
+    }
   }
 }
 

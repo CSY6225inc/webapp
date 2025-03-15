@@ -147,3 +147,5 @@ crash.log
 *.box
 *.zip
 devproject-451800-f038b2d41072.json
+robust-episode-451800-q1-0d31e0da33a3.json
+*.secrets
