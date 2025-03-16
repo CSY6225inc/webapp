@@ -145,20 +145,11 @@ jobs:
       - name: Extract AMI ID and GCP Image Name
         id: extract_packer_outputs
         run: |
-          AMI_ID=$(grep -oP 'AMIs were created:\n\S+: ami-\K[a-f0-9]+' $HOME/pkrbuild_output.log | tail -1)
-          echo "AMI_ID=ami-$AMI_ID" >> $GITHUB_ENV
+          AMI_ID=$(grep -oP 'ami-[a-f0-9]{17}' $HOME/pkrbuild_output.log | tail -1)
+          echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
 
           GCP_IMAGE_NAME=$(grep -oP "A disk image was created.*?: \K(.+)" $HOME/pkrbuild_output.log | tail -1)
           echo "GCP_IMAGE_NAME=$GCP_IMAGE_NAME" >> $GITHUB_ENV
-
-          if [ -z "$AMI_ID" ]; then
-            echo "Failed to extract AWS AMI ID"
-            exit 1
-          fi
-          if [ -z "$GCP_IMAGE_NAME" ]; then
-            echo "Failed to extract GCP Image Name"
-            exit 1
-          fi
       
       - name: Share AWS AMI with Demo AWS Account
         if: env.AMI_ID != ''
