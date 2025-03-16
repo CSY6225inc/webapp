@@ -166,3 +166,4 @@ jobs:
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --member=serviceAccount:${{ secrets.DEMO_GCP_PROJECT_NUMBER }}@cloudservices.gserviceaccount.com \
             --role=roles/compute.imageUser
+            
