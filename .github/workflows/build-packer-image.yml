@@ -156,7 +156,7 @@ jobs:
         run: |
           aws ec2 modify-image-attribute \
             --image-id ${{ env.AMI_ID }} \
-            --launch-permission "Add=[{UserId=${{ secrets.DEMO_AWS_ACCOUNT_ID }}]" \
+            --launch-permission "Add=[{UserId=${{ secrets.DEMO_AWS_ACCOUNT_ID }}}]" \
             --region ${{ secrets.AWS_REGION }}
 
       - name: Share GCP Image with Demo Project
