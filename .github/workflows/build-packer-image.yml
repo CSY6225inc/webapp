@@ -9,49 +9,49 @@ env:
   PRODUCT_VERSION: "1.10.0" 
 
 jobs:
-  # integration-tests:
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     DB_NAME: ${{ secrets.DB_NAME }}
-  #     DB_USER: ${{ secrets.DB_USER }}
-  #     DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  #     DB_HOST: ${{ secrets.DB_HOST }}
-  #     DB_PORT: ${{ secrets.DB_PORT }}
-  #     DB_DIALECT: ${{ secrets.DB_DIALECT }}
+  integration-tests:
+    runs-on: ubuntu-latest
+    env:
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_DIALECT: ${{ secrets.DB_DIALECT }}
 
-  #   steps:
-  #     - name: Check out code
-  #       uses: actions/checkout@v3
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
 
-  #     - name: Set up Node
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 16  # Specify your Node.js version
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16  # Specify your Node.js version
 
-  #     - name: Install dependencies
-  #       run: npm install
+      - name: Install dependencies
+        run: npm install
 
-  #     - name: Install PostgreSQL
-  #       run: |
-  #         echo "Installing PostgreSQL"
-  #         sudo apt-get update -y
-  #         sudo apt-get install -y postgresql postgresql-contrib
+      - name: Install PostgreSQL
+        run: |
+          echo "Installing PostgreSQL"
+          sudo apt-get update -y
+          sudo apt-get install -y postgresql postgresql-contrib
 
-  #     - name: Configure PostgreSQL without systemd
-  #       run: |
-  #         echo "Starting PostgreSQL manually"
-  #         sudo service postgresql start
+      - name: Configure PostgreSQL without systemd
+        run: |
+          echo "Starting PostgreSQL manually"
+          sudo service postgresql start
 
-  #     - name: Update database password
-  #       run: |
-  #         echo "Updating database password"
-  #         sudo -u postgres psql -c "ALTER USER ${{secrets.DB_USER}} WITH PASSWORD '${{secrets.DB_PASSWORD}}';"
+      - name: Update database password
+        run: |
+          echo "Updating database password"
+          sudo -u postgres psql -c "ALTER USER ${{secrets.DB_USER}} WITH PASSWORD '${{secrets.DB_PASSWORD}}';"
 
-  #     - name: Run tests
-  #       run: npm test 
+      - name: Run tests
+        run: npm test 
         
   build-machine-image:
-    # needs: integration-tests
+    needs: integration-tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
