@@ -88,22 +88,22 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      # - name: Authenticate with Google Cloud
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          install_components: 'beta,gsutil'
+      # - name: Set up Google Cloud SDK
+      #   uses: google-github-actions/setup-gcloud@v2
+      #   with:
+      #     project_id: ${{ secrets.GCP_PROJECT_ID }}
+      #     install_components: 'beta,gsutil'
 
-      - name: Save Google Cloud Credentials to File
-        run: |
-          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > $HOME/gcp-key.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp-key.json" >> $GITHUB_ENV
-        shell: bash
+      # - name: Save Google Cloud Credentials to File
+      #   run: |
+      #     echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > $HOME/gcp-key.json
+      #     echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp-key.json" >> $GITHUB_ENV
+      #   shell: bash
 
       - name: Setup Packer
         uses: hashicorp/setup-packer@main
@@ -142,14 +142,17 @@ jobs:
             -var "application_artifact_path=../webapp-fork.zip" \
             . | tee $HOME/pkrbuild_output.log
 
-      - name: Extract AMI ID and GCP Image Name
-        id: extract_packer_outputs
+      - name: Extract AMI ID 
+        id: extract_aws_packer_outputs
         run: |
           AMI_ID=$(grep -oP 'ami-[a-f0-9]{17}' $HOME/pkrbuild_output.log | tail -1)
           echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
 
-          GCP_IMAGE_NAME=$(grep -oP "A disk image was created.*?: \K(.+)" $HOME/pkrbuild_output.log | tail -1)
-          echo "GCP_IMAGE_NAME=$GCP_IMAGE_NAME" >> $GITHUB_ENV
+      # - name: Extract GCP Image Name
+      #   id: extract_gcp_packer_outputs
+      #   run: |
+      #     GCP_IMAGE_NAME=$(grep -oP "A disk image was created.*?: \K(.+)" $HOME/pkrbuild_output.log | tail -1)
+      #     echo "GCP_IMAGE_NAME=$GCP_IMAGE_NAME" >> $GITHUB_ENV
       
       - name: Share AWS AMI with Demo AWS Account
         if: env.AMI_ID != ''
@@ -159,11 +162,11 @@ jobs:
             --launch-permission "Add=[{UserId=${{ secrets.DEMO_AWS_ACCOUNT_ID }}}]" \
             --region ${{ secrets.AWS_REGION }}
 
-      - name: Share GCP Image with Demo Project
-        if: env.GCP_IMAGE_NAME != ''
-        run: |
-          gcloud compute images add-iam-policy-binding ${{ env.GCP_IMAGE_NAME }} \
-            --project=${{ secrets.GCP_PROJECT_ID }} \
-            --member=serviceAccount:${{ secrets.DEMO_GCP_PROJECT_NUMBER }}@cloudservices.gserviceaccount.com \
-            --role=roles/compute.imageUser
+      # - name: Share GCP Image with Demo Project
+      #   if: env.GCP_IMAGE_NAME != ''
+      #   run: |
+      #     gcloud compute images add-iam-policy-binding ${{ env.GCP_IMAGE_NAME }} \
+      #       --project=${{ secrets.GCP_PROJECT_ID }} \
+      #       --member=serviceAccount:${{ secrets.DEMO_GCP_PROJECT_NUMBER }}@cloudservices.gserviceaccount.com \
+      #       --role=roles/compute.imageUser
             

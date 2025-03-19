@@ -48,7 +48,8 @@ source "amazon-ebs" "ubuntu_server" {
 build {
   name = "ubuntu-24-node"
   sources = [
-    "source.googlecompute.app_image",
+    # GCP - commenting as requirement does require GCP
+    # "source.googlecompute.app_image", 
     "source.amazon-ebs.ubuntu_server",
   ]
   provisioner "file" {
@@ -60,14 +61,15 @@ build {
     script = "../scripts/setup_node.sh"
   }
 
-  provisioner "shell" {
-    script = "../scripts/setup_postgres.sh"
-    environment_vars = [
-      "DB_PASSWORD=${var.DB_PASSWORD}",
-      "DB_NAME=${var.DB_NAME}",
-      "DB_USER=${var.DB_USER}"
-    ]
-  }
+  # skipping installing postgres - commeting since required changed to RDS 
+  # provisioner "shell" {
+  #   script = "../scripts/setup_postgres.sh"
+  #   environment_vars = [
+  #     "DB_PASSWORD=${var.DB_PASSWORD}",
+  #     "DB_NAME=${var.DB_NAME}",
+  #     "DB_USER=${var.DB_USER}"
+  #   ]
+  # }
 
   # createing nonlogin user'csye6255'
   provisioner "shell" {
@@ -78,15 +80,15 @@ build {
     script = "../scripts/deploy_service.sh"
   }
 
-  # db user and alter
-  provisioner "shell" {
-    environment_vars = [
-      "DB_PASSWORD=${var.DB_PASSWORD}",
-      "DB_NAME=${var.DB_NAME}",
-      "DB_USER=${var.DB_USER}",
-    ]
-    script = "../scripts/configure_postgres.sh"
-  }
+  # db user and alter - commeting since required changed to RDS
+  # provisioner "shell" {
+  #   environment_vars = [
+  #     "DB_PASSWORD=${var.DB_PASSWORD}",
+  #     "DB_NAME=${var.DB_NAME}",
+  #     "DB_USER=${var.DB_USER}",
+  #   ]
+  #   script = "../scripts/configure_postgres.sh"
+  # }
 
   # systemd file
   provisioner "shell" {
