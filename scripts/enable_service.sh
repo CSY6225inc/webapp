@@ -2,9 +2,9 @@
 set -e
 
 echo "setting ownsership for csye6225"
-sudo chown -R csye6225:csye6225 /opt/csye6225
-sudo chmod -R 755 /opt/csye6225
-sudo chown csye6225:csye6225 /opt/csye6225/.env
+# sudo chown -R csye6225:csye6225 /opt/csye6225
+# sudo chmod -R 755 /opt/csye6225
+# sudo chown csye6225:csye6225 /opt/csye6225/.env
 
 echo "set up systemd for nodejs"
 
