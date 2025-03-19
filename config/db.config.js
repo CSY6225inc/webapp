@@ -10,13 +10,12 @@ const sequelize = new Sequelize(
         port: process.env.DB_PORT,
         dialect: process.env.DB_DIALECT,
         logging:false,
-        dialectOptions: {
-            ssl: {
-                require: true,
-                rejectUnauthorized: false
-            }
-        },
-
+        // dialectOptions: {
+        //     ssl: {
+        //         require: true,
+        //         rejectUnauthorized: false
+        //     }
+        // },
         // timezone: '-05:00'
         // timezone: '+00:00'
     },
