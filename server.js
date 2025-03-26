@@ -16,15 +16,23 @@ initalizeDatabase();
 logger.info("DB connection successful!")
 
 app.use((request, response, next) => {
+    logger.info({
+        msg: `Incoming request: ${request.method} ${request.url}`,
+        headers: request.headers,
+        params: request.params,
+        query: request.query
+    });
+    next();
+});
+
+app.use((request, response, next) => {
     const start = Date.now();
     request.on('finish', () => {
         const duration = Date.now() - start;
-        const statusCategory = `${Math.floor(response.statusCode / 100)}xx`;
         metrics.timing('api_request_time', duration, {
             method: request.method,
             route: request.path,
             status: statusCategory,
-            status_code: statusCode
         });
         metrics.increment("api_call_count", 1, {
             method: request.method,
