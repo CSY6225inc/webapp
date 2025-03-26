@@ -1,6 +1,13 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
-console.log("checking if password exists in Application layer",Boolean(process.env.DB_PASSWORD));
+const logger = require("../utils/logger");
+
+if (process.env.DB_PASSWORD) {
+    logger.warn("checking if password exists in Application layer", Boolean(process.env.DB_PASSWORD));
+} else {
+    logger.error("DB password not present in env")
+}
+
 const sequelize = new Sequelize(
     process.env.DB_NAME,
     process.env.DB_USER,
@@ -9,7 +16,8 @@ const sequelize = new Sequelize(
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         dialect: process.env.DB_DIALECT,
-        logging:false,
+        // logging:false,
+        logging: (msg) => logger.debug(`SQL Query:${msg}`),
         // dialectOptions: {
         //     ssl: {
         //         require: true,
