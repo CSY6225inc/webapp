@@ -15,20 +15,21 @@ logger.info("Establishing connection to the DB")
 initalizeDatabase();
 logger.info("DB connection successful!")
 
-app.use("/v1/file", fileRoutes);
-app.use(healthRoute);
-
 app.use((request, response, next) => {
     const start = Date.now();
     request.on('finish', () => {
         const duration = Date.now() - start;
+        const statusCategory = `${Math.floor(response.statusCode / 100)}xx`;
         metrics.timing('api_request_time', duration, {
             method: request.method,
-            route: request.path
+            route: request.path,
+            status: statusCategory,
+            status_code: statusCode
         });
         metrics.increment("api_call_count", 1, {
             method: request.method,
-            route: request.path
+            route: request.path,
+            status: response.statusCode
         })
         logger.info({
             method: request.method,
@@ -51,8 +52,11 @@ app.use((error, request, response, next) => {
         path: request.path,
         method: request.method
     });
+    metrics.increment(`api_error.${Math.floor(statusCode / 100)}xx`, 1);
     response.status(404).json({ error: `This Endpoint doesn't exist only /healthz and v1/file works!` })
 })
+app.use("/v1/file", fileRoutes);
+app.use(healthRoute);
 
 const server = app.listen(process.env.PORT, () => {
     logger.info(`Server running on port ${process.env.PORT}`);
