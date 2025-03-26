@@ -1,14 +1,15 @@
 const sequelize = require("../config/db.config");
+const logger = require("../utils/logger");
 const HealthCheck = require("./healthCheck");
 const initalizeDatabase = async () => {
     try {
         await sequelize.authenticate();
-        console.log("Connected to DB");
+        logger.info("Connected to DB");
         
         await sequelize.sync({ alter: true });
-        console.log("Synced DB");
+        logger.info("ORM authenticated and synchronized with DB");
     } catch (error) {
-        console.log("Error connecting to Database", error);
+        logger.error("Error connecting to Database - ORM", error);
     }
 }
 
