@@ -51,7 +51,7 @@ app.use((error, request, response, next) => {
         path: request.path,
         method: request.method
     });
-    response.status(500).json({ error: 'Internal sever error' })
+    response.status(404).json({ error: `This Endpoint doesn't exist only /healthz and v1/file works!` })
 })
 
 const server = app.listen(process.env.PORT, () => {
