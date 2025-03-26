@@ -120,6 +120,20 @@ router.delete("/:id", async (request, response) => {
     }
 })
 
+router.get("/", async(request,response)=>{
+    response.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    response.set('Pragma', 'no-cache');
+    response.set('X-Content-Type-Options', 'nosniff');
+    return response.status(400).send();
+})
+
+router.delete("/", async (request, response) => {
+    response.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    response.set('Pragma', 'no-cache');
+    response.set('X-Content-Type-Options', 'nosniff');
+    return response.status(400).send();
+})
+
 router.all("*", (request, response) => {
     response.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     response.set('Pragma', 'no-cache');
