@@ -99,4 +99,7 @@ build {
     script = "../scripts/remove_git.sh"
   }
 
+  provisioner "shell" {
+    script = "../scripts/setup_cloudwatch.sh"
+  }
 }
