@@ -5,6 +5,18 @@ const logger = require("../utils/logger");
 
 const router = express.Router();
 
+router.head("/healthz", (request, response) => {
+    logger.warn("Unsupported method attempted for health check", {
+        method: request.method,
+        path: request.path
+    });
+    response.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    response.set('Pragma', 'no-cache');
+    response.set('X-Content-Type-Options', 'nosniff');
+
+    return response.status(405).send();
+})
+
 router.get("/healthz", async (request, response) => {
     //check for request payload
     if (request.headers['content-length'] && parseInt(request.headers['content-length']) > 0) {

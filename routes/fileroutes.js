@@ -8,6 +8,18 @@ const FileCheck = require("../models/fileCheck");
 const { s3, bucketName } = require("../config/s3");
 const logger = require("../utils/logger");
 
+router.head("/:id", (request, response) => {
+    logger.warn("Unsupported method attempted for v1/file/", {
+        method: request.method,
+        path: request.path
+    });
+    response.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    response.set('Pragma', 'no-cache');
+    response.set('X-Content-Type-Options', 'nosniff');
+
+    return response.status(405).send();
+})
+
 router.post("/", upload.single('profilePic'), 
     (err, req, res, next) => {
         logger.warn("Multer error occurred in file upload - invalid headers present", { error: err.message, code: err.code });
@@ -39,7 +51,7 @@ router.post("/", upload.single('profilePic'),
     }
     try {
         logger.info("Starting file upload to S3", { fileId: fileID, fileName: request.file.originalname });
-        const s3ResponseData = await s3.upload(fileDetails).promise();
+        const s3ResponseData = await s3.upload(fileDetails);
         logger.debug("S3 upload successful", { fileId: fileID, etag: s3ResponseData.ETag });
         const savedFile = await FileCheck.create({
             id: fileID,
@@ -59,7 +71,7 @@ router.post("/", upload.single('profilePic'),
 
     } catch (error) {
         logger.error("File upload failed", { error: error.message, fileId: fileID });
-        await s3.deleteObject({ Bucket: bucketName, Key: fileID }).promise().catch(console.error);
+        await s3.deleteObject({ Bucket: bucketName, Key: fileID }).catch(console.error);
         logger.error("Failed to clean up S3 after failed upload", { fileId: fileID, error: deleteError.message });
         response.status(500).json({ error: error.message })
     }
@@ -120,7 +132,7 @@ router.delete("/:id", async (request, response) => {
             return response.status(400).json({ error: 'File not found' });
         }
         logger.debug("Deleting file from S3", { fileId: request.params.id });
-        await s3.deleteObject({ Bucket: bucketName, Key: fileToRemove.id}).promise();
+        await s3.deleteObject({ Bucket: bucketName, Key: fileToRemove.id});
         logger.debug("Deleting database record", { fileId: request.params.id });
         await fileToRemove.destroy();
         logger.info("File deleted successfully", { fileId: request.params.id });
