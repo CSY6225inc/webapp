@@ -2,9 +2,10 @@ const express = require("express");
 
 const { HealthCheck } = require("../models");
 const logger = require("../utils/logger");
-
+const metrics = require("../utils/metrics");
 const router = express.Router();
 
+const dbStart = Date.now();
 router.head("/healthz", (request, response) => {
     logger.warn("Unsupported method attempted for health check", {
         method: request.method,
@@ -41,6 +42,8 @@ router.get("/healthz", async (request, response) => {
         logger.debug("Initiating database health check");
         await HealthCheck.create({});
         logger.info("Database health check successful");
+        metrics.timing('db.healthcheck.time', Date.now() - dbStart);
+        metrics.increment('healthcheck.success');
         response.set('Cache-Control', 'no-cache, no-store, must-revalidate');
         response.set('Pragma', 'no-cache');
         response.set('X-Content-Type-Options', 'nosniff');
@@ -56,7 +59,7 @@ router.get("/healthz", async (request, response) => {
         response.set('Cache-Control', 'no-cache, no-store, must-revalidate');
         response.set('Pragma', 'no-cache');
         response.set('X-Content-Type-Options', 'nosniff');
-
+        metrics.increment('healthcheck.failure');
         return response.status(503).send();
     }
 })
