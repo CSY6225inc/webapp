@@ -6,15 +6,26 @@ require("dotenv").config();
 
 const { healthRoute } = require("./routes/healthroutes")
 const { fileRoutes } = require("./routes/fileroutes")
+const logger = require("./utils/logger");
+const { requestLogger, errorHandler } = require('./middlewares/observability');
 
 app.use(express.urlencoded({ extended: true }));
 
+logger.info("Establishing connection to the DB")
 initalizeDatabase();
-app.use("/v1/file",fileRoutes);
+logger.info("DB connection successful!")
+
+//Iadded middlewares
+app.use(express.urlencoded({ extended: true }));
+app.use(requestLogger);
+
+app.use("/v1/file", fileRoutes);
 app.use(healthRoute);
 
+app.use(errorHandler);
+
 const server = app.listen(process.env.PORT, () => {
-    console.log(`Server runs on port ${process.env.PORT}`);
+    logger.info(`Server running on port ${process.env.PORT}`);
 })
 
 module.exports = server;

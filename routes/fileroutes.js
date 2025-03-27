@@ -6,25 +6,42 @@ const upload = multer();
 const { v4: uuidv4 } = require("uuid");
 const FileCheck = require("../models/fileCheck");
 const { s3, bucketName } = require("../config/s3");
+const logger = require("../utils/logger");
+
+router.head("/:id", (request, response) => {
+    logger.warn("Unsupported method attempted for v1/file/", {
+        method: request.method,
+        path: request.path
+    });
+    response.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    response.set('Pragma', 'no-cache');
+    response.set('X-Content-Type-Options', 'nosniff');
+
+    return response.status(405).send();
+})
 
 router.post("/", upload.single('profilePic'), 
     (err, req, res, next) => {
-        console.log(req);
+        logger.warn("Multer error occurred in file upload - invalid headers present", { error: err.message, code: err.code });
         if (err instanceof multer.MulterError) {
             if (err.field !== 'profilePic') {
-                console.log(err);
+                logger.warn("Invalid field name used in headers", { attemptedField: err.field });
                 return res.status(400).json({ error: 'Invalid field name. Only "profilePic" is allowed' });
             }
             if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-                console.log(err);
+                logger.warn("Multiple files detected in upload", { field: err.field });
                 return res.status(400).json({ error: 'MMultiple files detected in profilePic field' });
             }
+            logger.warn("Multer upload error", { error: err.message });
             return res.status(400).json({ error: err.message });
         }
             next();
     }, 
     async (request, response) => {
-    if (!request.file) return response.status(400).json({ error: 'File has not been provided' });
+    if (!request.file) {
+        logger.warn("File upload attempt without file");
+        return response.status(400).json({ error: 'File has not been provided' });
+    }
     const fileID = uuidv4();
     const fileDetails = {
         Bucket: bucketName,
@@ -32,11 +49,10 @@ router.post("/", upload.single('profilePic'),
         Body: request.file.buffer,
         ContentType: request.file.mimetype
     }
-    // console.log(fileID,fileDetails);
     try {
-
-        const s3ResponseData = await s3.upload(fileDetails).promise();
-
+        logger.info("Starting file upload to S3", { fileId: fileID, fileName: request.file.originalname });
+        const s3ResponseData = await s3.upload(fileDetails);
+        logger.debug("S3 upload successful", { fileId: fileID, etag: s3ResponseData.ETag });
         const savedFile = await FileCheck.create({
             id: fileID,
             fileName: request.file.originalname,
@@ -45,7 +61,7 @@ router.post("/", upload.single('profilePic'),
             contentLength: request.file.size,
             etag: s3ResponseData.ETag 
         })
-        console.log(savedFile);
+        logger.info("File record created successfully", { fileId: fileID });
         return response.status(201).json({
             file_name: savedFile.fileName,
             id: savedFile.id,
@@ -54,7 +70,9 @@ router.post("/", upload.single('profilePic'),
         });
 
     } catch (error) {
-        await s3.deleteObject({ Bucket: bucketName, Key: fileID }).promise().catch(console.error);
+        logger.error("File upload failed", { error: error.message, fileId: fileID });
+        await s3.deleteObject({ Bucket: bucketName, Key: fileID }).catch(console.error);
+        logger.error("Failed to clean up S3 after failed upload", { fileId: fileID, error: deleteError.message });
         response.status(500).json({ error: error.message })
     }
 });
@@ -62,21 +80,25 @@ router.post("/", upload.single('profilePic'),
 router.get("/:id", async (request, response) => {
     try {
         if (request.is('multipart/form-data')) {
+            logger.warn("Invalid content-type - multipart/form-data for GET request", { contentType: 'multipart/form-data', fileId: request.params.id });
             return response.status(400).json({ error: 'Form-data (multipart/form-data) is not allowed' });
         }
         if (request.query && Object.keys(request.query).length > 0) {
+            logger.warn("Query parameters present in GET request", { fileId: request.params.id, queryParams: Object.keys(request.query) });
             return response.status(400).json({ error: 'Query parameters are not allowed' });
         }
         if (request.headers['content-length'] && parseInt(request.headers['content-length'], 10) > 0) {
-            console.log('No Payload!!!');
+            logger.warn("GET request with payload content", { fileId: request.params.id, contentLength: request.headers['content-length'] });
             return response.status(400).send(); // Bad Request
         }
-
+        logger.info("Fetching file record", { fileId: request.params.id });
         const fileResponseData = await FileCheck.findByPk(request.params.id);
-        console.log(fileResponseData);
+
         if (!fileResponseData) {
+            logger.warn("File not found", { fileId: request.params.id });
             return response.status(404).json({ error: 'File not found' })
         }
+        logger.info("File retrieved successfully", { fileId: request.params.id });
         return response.status(200).json({
             name: fileResponseData.fileName,
             identifier: fileResponseData.id,
@@ -84,6 +106,7 @@ router.get("/:id", async (request, response) => {
             uploaded_on: fileResponseData.uploadDate
         })
     } catch (error) {
+        logger.error("Error retrieving file", { error: error.message, fileId: request.params.id });
         response.status(500).json({ error: error.message })
     }
 });
@@ -91,25 +114,31 @@ router.get("/:id", async (request, response) => {
 router.delete("/:id", async (request, response) => {
     try {
         if (request.is('multipart/form-data')) {
+            logger.warn("Invalid content-type - multipart/form-data for DELETE request", { contentType: 'multipart/form-data', fileId: request.params.id });
             return response.status(400).json({ error: 'Form-data (multipart/form-data) is not allowed' });
         }
         if (request.query && Object.keys(request.query).length > 0) {
+            logger.warn("Query parameters present in DELETE request", { fileId: request.params.id, queryParams: Object.keys(request.query) });
             return response.status(400).json({ error: 'Query parameters are not allowed' });
         }
         if (request.headers['content-length'] && parseInt(request.headers['content-length'], 10) > 0) {
-            console.log('No Payload!!!');
+            logger.warn("DELETE request with payload content", { fileId: request.params.id, contentLength: request.headers['content-length'] });
             return response.status(400).send(); // Bad Request
         }
-        
+        logger.info("Processing file deletion", { fileId: request.params.id });
         const fileToRemove = await FileCheck.findByPk(request.params.id);
         if (!fileToRemove) {
+            logger.warn("File not found for deletion", { fileId: request.params.id });
             return response.status(400).json({ error: 'File not found' });
         }
-        await s3.deleteObject({ Bucket: bucketName, Key: fileToRemove.id}).promise();
-
+        logger.debug("Deleting file from S3", { fileId: request.params.id });
+        await s3.deleteObject({ Bucket: bucketName, Key: fileToRemove.id});
+        logger.debug("Deleting database record", { fileId: request.params.id });
         await fileToRemove.destroy();
+        logger.info("File deleted successfully", { fileId: request.params.id });
         response.status(204).end();
     } catch (error) {
+        logger.error("File deletion failed", { error: error.message, fileId: request.params.id });
         // if (error.code === 'NoSuchKey') {
         //     return response.status(404).json({ error: 'File not found in storage' });
         // }
@@ -120,7 +149,24 @@ router.delete("/:id", async (request, response) => {
     }
 })
 
+router.get("/", async(request,response)=>{
+    logger.warn("Invalid GET request to base files endpoint without /:id");
+    response.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    response.set('Pragma', 'no-cache');
+    response.set('X-Content-Type-Options', 'nosniff');
+    return response.status(400).send();
+})
+
+router.delete("/", async (request, response) => {
+    logger.warn("Invalid DELETE request to base files endpoint without /:id");
+    response.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    response.set('Pragma', 'no-cache');
+    response.set('X-Content-Type-Options', 'nosniff');
+    return response.status(400).send();
+})
+
 router.all("*", (request, response) => {
+    logger.warn("Invalid method or route accessed", { method: request.method, path: request.path });
     response.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     response.set('Pragma', 'no-cache');
     response.set('X-Content-Type-Options', 'nosniff');
