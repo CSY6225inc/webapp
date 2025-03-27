@@ -18,13 +18,14 @@ const devLogger = pino({
 // Cloudwatch config for production
 const prodLogger = pino({
     level: process.env.LOG_LEVEL || 'info',
+    base: null,
+    timestamp: () => `,"@timestamp":"${new Date().toISOString()}"`,
     formatters: {
-        level: (label) => ({ level: label }),
+        level: (label) => ({ level: label.toUpperCase() }),
+        bindings: () => ({}), 
     },
-    timestamp: () => `,"time":"${new Date().toISOString()}"`
+    messageKey: 'message',
 }, pcw({
-    // aws_access_key_id: process.env.AWS_ACCESS_KEY_ID,
-    // aws_secret_access_key: process.env.AWS_SECRET_ACCESS_KEY,
     aws_region: process.env.AWS_REGION,
     group: '/csye6225-web-app/logs',
     stream: 'web-app',
