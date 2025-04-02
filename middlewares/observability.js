@@ -1,7 +1,7 @@
 const logger = require('../utils/logger');
 const metrics = require('../utils/metrics');
 
-const logRequest = (req, res, next) => {
+const requestLogger = (req, res, next) => {
     const requestStart = Date.now();
     const completePath = req.baseUrl + req.path;
 
@@ -41,7 +41,7 @@ const logRequest = (req, res, next) => {
     next();
 };
 
-const handleServerErrors = (error, req, res, next) => {
+const errorHandler = (error, req, res, next) => {
     const responseCode = error.statusCode || 500;
     const statusGroup = `${Math.floor(responseCode / 100)}xx`;
     const completePath = req.baseUrl + req.path;
@@ -70,6 +70,6 @@ const handleServerErrors = (error, req, res, next) => {
 };
 
 module.exports = {
-    logRequest,
-    handleServerErrors
+    requestLogger,
+    errorHandler
 };
