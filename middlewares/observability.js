@@ -1,70 +1,70 @@
 const logger = require('../utils/logger');
 const metrics = require('../utils/metrics');
 
-const requestLogger = (request, response, next) => {
-    const start = Date.now();
-    const fullRoute = request.baseUrl + request.path;
-    // Request start logging
+const requestLogger = (req, res, next) => {
+    const requestStart = Date.now();
+    const completePath = req.baseUrl + req.path;
+
     logger.debug({
-        incoming: `Incoming request: ${request.method} ${fullRoute}`,
-        message: 'Request started',
-        method: request.method,
-        path: fullRoute,
-        query: request.query,
-        // headers:request.headers
+        event: `Receiving ${req.method} request`,
+        endpoint: completePath,
+        requestDetails: {
+            method: req.method,
+            fullPath: completePath,
+            queryParams: req.query
+        }
     });
 
-    // Response finish handler
-    response.on('finish', () => {
-        const duration = Date.now() - start;
-        const statusCode = response.statusCode;
-        const statusCategory = `${Math.floor(statusCode / 100)}xx`;
+    res.on('finish', () => {
+        const processingTime = Date.now() - requestStart;
+        const responseStatus = res.statusCode;
+        const statusGroup = `${Math.floor(responseStatus / 100)}xx`;
 
-        const metricTags = {
-            incoming: `Outgoing response for: ${request.method} ${fullRoute}`,
-            method: request.method,
-            route: fullRoute,
-            status_code: statusCode,
-            status_category: statusCategory
+        const performanceMetrics = {
+            event: `Completed ${req.method} request`,
+            method: req.method,
+            endpoint: completePath,
+            responseCode: responseStatus,
+            responseGroup: statusGroup
         };
 
-        metrics.timing('api.request.time', duration, metricTags);
-        metrics.increment('api.request.count', 1, metricTags);
+        metrics.timing('server.request.processingTime', processingTime, performanceMetrics);
+        metrics.increment('server.request.totalCount', 1, performanceMetrics);
 
         logger.info({
-            message: 'Request completed - sent response',
-            ...metricTags,
-            duration_ms: duration,
-            user_agent: request.headers['user-agent']
+            ...performanceMetrics,
+            processingDuration: processingTime,
+            clientAgent: req.headers['user-agent']
         });
     });
 
     next();
 };
 
-const errorHandler = (err, request, response, next) => {
-    const statusCode = err.statusCode || 500;
-    const statusCategory = `${Math.floor(statusCode / 100)}xx`;
-    const fullRoute = request.baseUrl + request.path;
-    metrics.increment('application.errors', 1, {
-        method: request.method,
-        path: fullRoute,
-        error_type: err.name,
-        status_category: statusCategory
+const errorHandler = (error, req, res, next) => {
+    const responseCode = error.statusCode || 500;
+    const statusGroup = `${Math.floor(responseCode / 100)}xx`;
+    const completePath = req.baseUrl + req.path;
+
+    metrics.increment('system.errorOccurrences', 1, {
+        method: req.method,
+        endpoint: completePath,
+        errorType: error.name,
+        statusCategory: statusGroup
     });
 
     logger.error({
-        message: 'Application error',
-        error: err.message,
-        stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
-        status_code: statusCode,
-        path: fullRoute
+        errorMessage: 'System error encountered',
+        details: error.message,
+        stackTrace: process.env.ENVIRONMENT === 'production' ? undefined : error.stack,
+        responseStatus: responseCode,
+        affectedPath: completePath
     });
 
-    if (!response.headersSent) {
-        response.status(statusCode).json({
-            error: statusCode === 404 ? 'Resource not found' : 'Internal server error',
-            ...(process.env.NODE_ENV !== 'production' && { details: err.message })
+    if (!res.headersSent) {
+        res.status(responseCode).json({
+            errorMessage: responseCode === 404 ? 'Requested resource not available' : 'Server processing error',
+            ...(process.env.ENVIRONMENT !== 'production' && { errorDetails: error.message })
         });
     }
 };
