@@ -99,6 +99,11 @@ build {
     script = "../scripts/remove_git.sh"
   }
 
+  provisioner "file" {
+    source      = "./configs/amazon-cloudwatch-agent.json"
+    destination = "/home/ubuntu/amazon-cloudwatch-agent.json"
+  }
+
   provisioner "shell" {
     script = "../scripts/setup_cloudwatch.sh"
   }
