@@ -55,6 +55,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      ami-id: ${{ steps.build-machine-image.outputs.ami_id }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -173,6 +175,7 @@ jobs:
     needs: build-machine-image
     runs-on: ubuntu-latest
     env:
+      AMI_ID: ${{ needs.build-machine-image.outputs.ami-id }}
       DEMO_ASG: csye6225_asg
       TEMPLATE_NAME: csye6225-webapp-lt
 
