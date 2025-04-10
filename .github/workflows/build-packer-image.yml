@@ -193,7 +193,7 @@ jobs:
 
       - name: Generate new template version
         id: generate_template
-        run: >
+        run: |
           echo "Using AMI with ID: $AMI_ID for launch template update..."
 
           TEMPLATE_VERSION=$(aws ec2 create-launch-template-version \
