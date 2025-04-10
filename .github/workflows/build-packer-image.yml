@@ -172,7 +172,7 @@ jobs:
       #       --project=${{ secrets.GCP_PROJECT_ID }} \
       #       --member=serviceAccount:${{ secrets.DEMO_GCP_PROJECT_NUMBER }}@cloudservices.gserviceaccount.com \
       #       --role=roles/compute.imageUser
-  Perform-Continous-Deployment:
+  perform-continous-deployment:
     needs: build-machine-image
     runs-on: ubuntu-latest
     env:
