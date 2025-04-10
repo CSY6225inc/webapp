@@ -169,4 +169,81 @@ jobs:
       #       --project=${{ secrets.GCP_PROJECT_ID }} \
       #       --member=serviceAccount:${{ secrets.DEMO_GCP_PROJECT_NUMBER }}@cloudservices.gserviceaccount.com \
       #       --role=roles/compute.imageUser
-            
+  Perform-Continous-Deployment:
+    needs: build-machine-image
+    runs-on: ubuntu-latest
+    env:
+      DEMO_ASG: csye6225_asg
+      TEMPLATE_NAME: csye6225-webapp-lt
+
+    steps:
+      - name: Fetch latest codebase
+        uses: actions/checkout@v4
+
+      - name: Set up AWS DEMO credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: '${{ secrets.DEMO_AWS_ACCOUNT_ACCESS_KEY_ID }}'
+          aws-secret-access-key: '${{ secrets.DEMO_AWS_SECRET_ACCESS_KEY }}'
+          aws-region: '${{ secrets.AWS_REGION }}'
+
+      - name: Generate new template version
+        id: generate_template
+        run: >
+          echo "Using AMI with ID: $AMI_ID for launch template update..."
+
+          TEMPLATE_VERSION=$(aws ec2 create-launch-template-version \
+            --launch-template-name $TEMPLATE_NAME \
+            --source-version '$Latest' \
+            --launch-template-data "{\"ImageId\":\"$AMI_ID\"}" \
+            --query 'LaunchTemplateVersion.VersionNumber' \
+            --output text)
+
+          echo "Generated template version: $TEMPLATE_VERSION"
+          echo "template_version=$TEMPLATE_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update ASG with new version
+        run: |
+          aws autoscaling update-auto-scaling-group \
+            --auto-scaling-group-name $DEMO_ASG \
+            --launch-template "LaunchTemplateName=$TEMPLATE_NAME,Version=${{ steps.generate_template.outputs.template_version }}"
+
+      - name: Trigger ASG instance refresh
+        id: refresh_trigger
+        run: |
+          REFRESH_TOKEN=$(aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name $DEMO_ASG \
+            --preferences '{"MinHealthyPercentage":90,"InstanceWarmup":60}' \
+            --query 'InstanceRefreshId' \
+            --output text)
+
+          echo "Started instance refresh with ID: $REFRESH_TOKEN"
+          echo "refresh_id=$REFRESH_TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Monitor refresh progress
+        run: |
+          REFRESH_TOKEN=${{ steps.refresh_trigger.outputs.refresh_id }}
+          echo "Monitoring instance refresh ID: $REFRESH_TOKEN"
+          CURRENT_STATUS=$(aws autoscaling describe-instance-refreshes \
+            --auto-scaling-group-name $DEMO_ASG \
+            --query "InstanceRefreshes[?InstanceRefreshId=='$REFRESH_TOKEN'].Status" \
+            --output text)
+
+          echo "Initial status: $CURRENT_STATUS"
+
+          for attempt in {1..20}; do
+            CURRENT_STATUS=$(aws autoscaling describe-instance-refreshes \
+              --auto-scaling-group-name $DEMO_ASG \
+              --query "InstanceRefreshes[?InstanceRefreshId=='$REFRESH_TOKEN'].Status" \
+              --output text)
+
+            echo "Attempt $attempt: Status - $CURRENT_STATUS"
+
+            if [[ "$CURRENT_STATUS" == "Successful" || "$CURRENT_STATUS" == "Failed" ]]; then
+              echo "Instance refresh completed with status: $CURRENT_STATUS"
+              break
+            fi
+
+            echo "Waiting for 30 seconds before checking again..."
+            sleep 30
+          done
