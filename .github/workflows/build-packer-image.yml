@@ -178,7 +178,7 @@ jobs:
     env:
       AMI_ID: ${{ needs.build-machine-image.outputs.ami_id }}
       DEMO_ASG: csye6225_asg
-      TEMPLATE_NAME: webapp-launch-template-
+      TEMPLATE_NAME: webapp-launch-template
 
     steps:
       - name: Fetch latest codebase
