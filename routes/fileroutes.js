@@ -11,7 +11,7 @@ const metrics =require("../utils/metrics");
 
 router.head("/:id", (request, response) => {
     metrics.increment('api.method.not_allowed', 1, { method: 'HEAD' });
-    logger.warn("Unsupported method attempted for v1/file/", {
+    logger.warn("Unsupported method attempted for v2/file/", {
         method: request.method,
         path: request.path
     });
