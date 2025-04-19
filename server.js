@@ -19,7 +19,7 @@ logger.info("DB connection successful!")
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
-app.use("/v1/file", fileRoutes);
+app.use("/v2/file", fileRoutes);
 app.use(healthRoute);
 
 app.use(errorHandler);
